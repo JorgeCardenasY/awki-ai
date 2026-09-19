@@ -1,0 +1,37 @@
+# Apache 2.4 + mod_rewrite + mod_proxy + mod_headers
+# Requisitos (DirectAdmin): habilitar `mod_proxy`, `mod_proxy_http`, `mod_rewrite` y `mod_headers`.
+#
+# Next.js (output: standalone) debe ejecutarse con:
+#     node .next/standalone/server.js
+# escuchando en 127.0.0.1:3000 (puerto por defecto; debe coincidir con el puerto
+# asignado en "Setup Node.js App" de DirectAdmin, o ajustar la variable PORT).
+#
+# ⚠️ En DirectAdmin, desactiva el "auto-proxy" de la Node.js App para evitar un
+# doble reverse proxy (este .htaccess ya hace el proxy hacia el servidor Node).
+
+RewriteEngine On
+
+# Mantener un unico dominio canonico.
+RewriteCond %{HTTP_HOST} !^awki\.cl$ [NC]
+RewriteRule ^ https://awki.cl%{REQUEST_URI} [R=301,L]
+
+# Forzar HTTPS tanto en conexiones directas como detras de un proxy TLS.
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !^https$ [NC]
+RewriteRule ^ https://awki.cl%{REQUEST_URI} [R=301,L]
+
+# Cache prolongada para assets versionados de Next.js.
+RewriteRule ^_next/static/(.*)$ http://127.0.0.1:3000/_next/static/$1 [P,L,NE]
+
+# El resto de rutas se resuelve mediante el servidor Next.js.
+RewriteRule ^ http://127.0.0.1:3000%{REQUEST_URI} [P,L,NE]
+
+ProxyPreserveHost On
+ProxyTimeout 60
+
+<IfModule mod_headers.c>
+    <FilesMatch "^_next/static/">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
