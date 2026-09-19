@@ -24,10 +24,10 @@ assets propios del sitio.
 | Necesidad del proyecto | Tecnología del servidor | ¿Dónde vive? |
 |---|---|---|
 | Runtime Node.js (≥ 20.9) | Setup Node.js App (selector Node) | Servidor (no se versiona) |
-| Instalar deps + build | Setup Node.js App (`npm ci && npm run build`) | Servidor |
+| Instalar deps + build | Trabajo Cron (`npm ci && npm run build`) — sin terminal | Servidor |
 | Reverse proxy Apache → Node | Manipuladores Apache + `.htaccess` (mod_proxy) | Servidor |
 | HTTPS / dominio canónico | SSL/TLS Certificates + Dominios + DNS | Servidor |
-| Despliegue versionado | Git | Remoto (GitHub) + servidor |
+| Despliegue | FTP/File Manager (subida) — Git solo para versionar | Servidor |
 | Backend futuro (Django) | Setup Python App | Servidor (futuro) |
 | BBDD futura (PostgreSQL) | Base de Datos | Servidor (futuro) |
 | Seguridad en borde | Web Application Firewall + ImunifyAV | Servidor |
@@ -92,11 +92,12 @@ Huella del servidor: **pico de build ≈ 945 MB** · **runtime persistente ≈ 3
 5. Habilitar módulos Apache: `mod_rewrite`, `mod_proxy`, `mod_proxy_http`, `mod_headers`.
 
 ### Fase 2 — Despliegue (por cada release)
-6. Actualizar el repo vía DirectAdmin **Git** (o `git pull` por SSH).
-7. Setup Node.js App: Node 20/22, build `npm ci && npm run build`, start `node .next/standalone/server.js`, puerto `3000`.
+6. Subir los ficheros por FTP/File Manager (sin SSH) a `domains/awki-ai.cl/public_html/`.
+7. Setup Node.js App: Node 20/22, start `node .next/standalone/server.js`, puerto `3000`.
 8. Definir `NEXT_PUBLIC_GA_MEASUREMENT_ID` **antes** del build.
-9. Copiar assets: `public/` y `.next/static/` → `.next/standalone/`.
-10. Desactivar auto-proxy de DirectAdmin (el `.htaccess` ya proxea).
+9. Build sin terminal: **Trabajo Cron** con `cd .../public_html && npm ci && npm run build`
+   (el `postbuild` copia `public/` y `.next/static/` automáticamente); luego borrar el cron.
+10. Desactivar auto-proxy de DirectAdmin (el `.htaccess` ya proxea) y pulsar **Start**.
 
 ### Fase 3 — Verificación
 11. HTTPS, headers de seguridad, sitemap/robots, fuentes, página 404 propia.
