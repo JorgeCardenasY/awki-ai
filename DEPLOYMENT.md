@@ -18,6 +18,7 @@ app/
 components/
 lib/
 services/
+scripts/              (incluye copy-standalone.mjs, usado por `postbuild`)
 package.json
 package-lock.json
 next.config.ts
@@ -61,24 +62,32 @@ node_modules/   → 557 MB de dependencias (el servidor las descarga con `npm ci
 
 > ⚠️ Desactiva el "auto-proxy" de DirectAdmin: el `.htaccess` ya hace el proxy.
 
-### 4) Compilar en el servidor (una sola vez)
+### 4) Compilar en el servidor (una sola vez, sin terminal)
 
-Ejecuta **en el servidor** (Terminal del panel o un Trabajo Cron manual):
+Como el panel no tiene terminal, usa **"Trabajo Cron"** para ejecutar el build:
 
-```bash
-cd /home/USUARIO/domains/awki-ai.cl/public_html && npm ci && npm run build
-```
+1. Ve a **"Trabajo Cron"** → *Create New Cron Job*.
+2. Comando:
+
+   ```bash
+   cd /home/USUARIO/domains/awki-ai.cl/public_html && npm ci && npm run build
+   ```
+
+3. Configúralo para que se ejecute (p. ej. cada minuto), espera **2–4 minutos** a que
+   termine (`npm ci` descarga las dependencias) y **borra el cron job** al finalizar.
 
 > ⚠️ No hagas el build en Windows y subas `.next`: los binarios nativos (`@swc`, `sharp`)
 > son incompatibles con Linux. El build debe ocurrir en el servidor.
+>
+> ⚠️ Si el cron falla con `npm: command not found`, usa la ruta completa de `node`/`npm`
+> (la versión instalada por "Setup Node.js App", p. ej. `/usr/local/node20/bin/npm`).
 
-### 5) Copiar assets y arrancar
+### 5) Arrancar la app
 
-```bash
-cp -r .next/static .next/standalone/.next/
-```
+No hay que copiar nada a mano: el script `postbuild` (ver `package.json`) ya copió
+`public/` y `.next/static/` al standalone durante el build.
 
-Pulsa **Start/Restart** en la Node.js App.
+Solo pulsa **Start/Restart** en la Node.js App.
 
 ### 6) Verificar
 
@@ -93,7 +102,7 @@ Abre `https://www.awki-ai.cl`: HTTPS, fuentes, 3D, `sitemap.xml` y `robots.txt`.
 | Dominio | `awki-ai.cl` y `www.awki-ai.cl` apuntando a la IP del servidor (registros A) | "Administración DNS" / tu registrador |
 | Node.js | **≥ 20.9.0** (recomendado 20 LTS o 22 LTS) | "Setup Node.js App" → selector de versión |
 | Módulos Apache | `mod_rewrite`, `mod_proxy`, `mod_proxy_http`, `mod_headers` | "Manipuladores Apache" / soporte |
-| Acceso | SSH o File Manager/FTP para subir el código | — |
+| Acceso | File Manager/FTP (o Git) para subir el código — sin SSH | — |
 | Salida a internet durante el build | `next/font/google` descarga las fuentes en `npm run build` | prueba de red en el servidor |
 
 ---
@@ -142,11 +151,12 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 
 ## 4. Build en el servidor
 
-Desde la raíz del proyecto (vía SSH o la terminal de "Setup Node.js App"):
+Desde la raíz del proyecto. Sin terminal, hazlo con un **Trabajo Cron** (ver el paso 4 del
+"Paso a paso rápido"):
 
 ```bash
 npm install        # instala dependencias (usa package-lock.json: `npm ci` si prefieres)
-npm run build      # genera .next/ con la carpeta standalone
+npm run build      # genera .next/ con la carpeta standalone (y postbuild copia assets)
 ```
 
 Si el build falla por falta de red (fuentes de Google), revisa que el servidor tenga
@@ -154,14 +164,11 @@ salida a internet o contacta a soporte para permitir `fonts.googleapis.com`.
 
 ---
 
-## 5. Copiar assets al standalone
+## 5. Copiar assets al standalone (automático)
 
-`output: "standalone"` NO copia automáticamente los assets estáticos. Tras el build:
-
-```bash
-cp -r public .next/standalone/
-cp -r .next/static .next/standalone/.next/
-```
+`output: "standalone"` NO copia los assets estáticos por sí solo, pero este proyecto lo
+automatiza con el script `postbuild` (`scripts/copy-standalone.mjs`), que `npm run build`
+ejecuta solo. No hay que copiar nada a mano.
 
 Resultado esperado:
 
@@ -224,13 +231,11 @@ Cada vez que publiques cambios:
 ```bash
 git pull                          # o sube los archivos nuevos
 npm install                       # si cambió package.json
-npm run build                     # re-build
-cp -r public .next/standalone/
-cp -r .next/static .next/standalone/.next/
-# Reinicia la Node.js App desde el panel de DirectAdmin (o systemctl/pm2 según aplique)
+npm run build                     # re-build (postbuild copia assets automáticamente)
 ```
 
-> Para reiniciar, usa el botón *Restart* de "Setup Node.js App".
+> Sin terminal, ejecuta el build con un **Trabajo Cron** (igual que el paso 4 del
+> "Paso a paso rápido") y luego pulsa el botón *Restart* de "Setup Node.js App".
 
 ---
 
