@@ -2,7 +2,7 @@
  * Constantes globales del sitio — fuente única de verdad para SEO,
  * metadatos, robots, sitemap y manifest.
  */
-export const SITE_URL = "https://awki.cl"; // ⚠️ confirmar dominio real en producción
+export const SITE_URL = "https://www.awki-ai.cl"; // dominio canónico (apex redirige a www)
 export const SITE_NAME = "Awki AI Tech";
 export const SITE_TITLE =
   "Awki AI Tech — Trazabilidad Logística en Rutas Altoandinas";

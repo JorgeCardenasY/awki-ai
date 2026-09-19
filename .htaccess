@@ -11,14 +11,14 @@
 
 RewriteEngine On
 
-# Mantener un unico dominio canonico.
-RewriteCond %{HTTP_HOST} !^awki\.cl$ [NC]
-RewriteRule ^ https://awki.cl%{REQUEST_URI} [R=301,L]
+# Mantener un unico dominio canonico: www.awki-ai.cl (apex redirige a www).
+RewriteCond %{HTTP_HOST} !^www\.awki-ai\.cl$ [NC]
+RewriteRule ^ https://www.awki-ai.cl%{REQUEST_URI} [R=301,L]
 
 # Forzar HTTPS tanto en conexiones directas como detras de un proxy TLS.
 RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !^https$ [NC]
-RewriteRule ^ https://awki.cl%{REQUEST_URI} [R=301,L]
+RewriteRule ^ https://www.awki-ai.cl%{REQUEST_URI} [R=301,L]
 
 # Cache prolongada para assets versionados de Next.js.
 RewriteRule ^_next/static/(.*)$ http://127.0.0.1:3000/_next/static/$1 [P,L,NE]

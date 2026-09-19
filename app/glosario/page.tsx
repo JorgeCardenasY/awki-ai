@@ -23,7 +23,7 @@ export default function GlosarioPage() {
       "@type": "DefinedTerm",
       name: t.term,
       description: t.definition,
-      inDefinedTermSet: "https://awki.cl/glosario",
+      inDefinedTermSet: "https://www.awki-ai.cl/glosario",
     })),
   };
 

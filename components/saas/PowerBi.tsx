@@ -2,7 +2,7 @@ const M_QUERY = `// Conecta al API de Awki y normaliza las lecturas (ETL)
 let
     Origen = Json.Document(
         Web.Contents(
-            "https://api.awki.cl/api/v1/lecturas",
+            "https://api.awki-ai.cl/api/v1/lecturas",
             [Headers = [#"Authorization" = "Bearer " & Token]]
         )
     ),

@@ -9,11 +9,88 @@ funcionalidad **Setup Node.js App** y el reverse proxy definido en `.htaccess`.
 
 ---
 
+## 🚀 Paso a paso rápido (FTP + panel web, sin SSH)
+
+### 1) Qué subir por FileZilla → a `domains/awki-ai.cl/public_html/`
+
+```
+app/
+components/
+lib/
+services/
+package.json
+package-lock.json
+next.config.ts
+tsconfig.json
+tailwind.config.ts
+postcss.config.mjs
+eslint.config.mjs     (opcional: solo para `npm run lint`)
+.htaccess             ⚠️ crítico: reverse proxy Apache
+.env.example          (opcional: plantilla de variables)
+next-env.d.ts         (opcional: Next lo regenera solo)
+```
+
+> `public/` está vacía: no hace falta subirla.
+> Los `*.md` de documentación (README, DEPLOYMENT, ROADMAP, SEO_*) son opcionales.
+
+### ⛔ Qué NO subir (nunca)
+
+```
+node_modules/   → 557 MB de dependencias (el servidor las descarga con `npm ci`)
+.next/          → 388 MB de build (el servidor lo genera con `npm run build`)
+.git/           → historial local (no se necesita en el servidor)
+.env.local      → secretos (se crea directamente en el servidor)
+```
+
+### 2) DNS y SSL (panel)
+
+1. **Administración DNS**: registro `A` para `awki-ai.cl` y otro para `www.awki-ai.cl` → IP del servidor.
+2. **SSL/TLS Certificates**: Let's Encrypt cubriendo `awki-ai.cl` y `www.awki-ai.cl`.
+
+### 3) Crear la Node.js App (panel)
+
+**"Setup Node.js App"** → *Create Application*:
+
+| Campo | Valor |
+|---|---|
+| Node.js version | 20 o 22 (≥ 20.9) |
+| Application root | `/home/USUARIO/domains/awki-ai.cl/public_html` |
+| Startup command | `node .next/standalone/server.js` |
+| Port | `3000` |
+| Environment variables | `PORT=3000` (+ `NEXT_PUBLIC_GA_MEASUREMENT_ID` opcional) |
+
+> ⚠️ Desactiva el "auto-proxy" de DirectAdmin: el `.htaccess` ya hace el proxy.
+
+### 4) Compilar en el servidor (una sola vez)
+
+Ejecuta **en el servidor** (Terminal del panel o un Trabajo Cron manual):
+
+```bash
+cd /home/USUARIO/domains/awki-ai.cl/public_html && npm ci && npm run build
+```
+
+> ⚠️ No hagas el build en Windows y subas `.next`: los binarios nativos (`@swc`, `sharp`)
+> son incompatibles con Linux. El build debe ocurrir en el servidor.
+
+### 5) Copiar assets y arrancar
+
+```bash
+cp -r .next/static .next/standalone/.next/
+```
+
+Pulsa **Start/Restart** en la Node.js App.
+
+### 6) Verificar
+
+Abre `https://www.awki-ai.cl`: HTTPS, fuentes, 3D, `sitemap.xml` y `robots.txt`.
+
+---
+
 ## 1. Prerequisitos
 
 | Requisito | Detalle | Dónde verificarlo |
 |---|---|---|
-| Dominio | `awki.cl` apuntando a la IP del servidor (registro A, y `www` si aplica) | "Administración DNS" / tu registrador |
+| Dominio | `awki-ai.cl` y `www.awki-ai.cl` apuntando a la IP del servidor (registros A) | "Administración DNS" / tu registrador |
 | Node.js | **≥ 20.9.0** (recomendado 20 LTS o 22 LTS) | "Setup Node.js App" → selector de versión |
 | Módulos Apache | `mod_rewrite`, `mod_proxy`, `mod_proxy_http`, `mod_headers` | "Manipuladores Apache" / soporte |
 | Acceso | SSH o File Manager/FTP para subir el código | — |
@@ -37,12 +114,12 @@ Elige **una** de estas opciones:
    ```
 
 2. En DirectAdmin → **Git** → *Create Repository* → pega la URL y clona dentro de
-   `domains/awki.cl/` (o el directorio que uses).
+   `domains/awki-ai.cl/` (o el directorio que uses).
 
 ### Opción B — File Manager / FTP
 
 1. Sube todo el proyecto **excepto** `node_modules`, `.next`, `.git` y `.env*` a un
-   directorio como `domains/awki.cl/awki/`.
+   directorio como `domains/awki-ai.cl/awki/`.
 
 > ⚠️ No subas `node_modules` ni `.next`: se generan en el servidor durante el build.
 > `.env.local` con secretos tampoco debe versionarse (ya está en `.gitignore`).
@@ -106,7 +183,7 @@ Ir a **"Setup Node.js App"** → *Create Application*:
 | Campo | Valor |
 |---|---|
 | Node.js version | 20 LTS o 22 LTS (≥ 20.9) |
-| Application root / directory | la raíz del proyecto (`/home/USUARIO/domains/awki.cl/awki`) |
+| Application root / directory | la raíz del proyecto (`/home/USUARIO/domains/awki-ai.cl/awki`) |
 | Startup file / command | `node .next/standalone/server.js` |
 | Port | `3000` (debe coincidir con el puerto del `.htaccess`) |
 | Environment variables | `PORT=3000`, `NEXT_PUBLIC_GA_MEASUREMENT_ID=...` (opcional) |
@@ -122,20 +199,20 @@ Ir a **"Setup Node.js App"** → *Create Application*:
 
 ## 7. Verificación post-deploy
 
-Desde un navegador y por línea de comandos (`curl -I https://awki.cl`):
+Desde un navegador y por línea de comandos (`curl -I https://www.awki-ai.cl`):
 
-- [ ] `https://awki.cl` carga (HTTPS válido, sin warning).
-- [ ] `http://awki.cl` y `http://www.awki.cl` redirigen 301 a `https://awki.cl`.
+- [ ] `https://www.awki-ai.cl` carga (HTTPS válido, sin warning).
+- [ ] `http://awki-ai.cl` y `http://www.awki-ai.cl` redirigen 301 a `https://www.awki-ai.cl`.
 - [ ] Headers de seguridad presentes: `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`.
-- [ ] `https://awki.cl/_next/static/...` sirve assets con `Cache-Control: public, max-age=31536000, immutable`.
+- [ ] `https://www.awki-ai.cl/_next/static/...` sirve assets con `Cache-Control: public, max-age=31536000, immutable`.
 - [ ] Fuentes (`Space Grotesk`, `JetBrains Mono`) cargan correctamente (no fallback).
-- [ ] `https://awki.cl/sitemap.xml` y `https://awki.cl/robots.txt` responden.
+- [ ] `https://www.awki-ai.cl/sitemap.xml` y `https://www.awki-ai.cl/robots.txt` responden.
 - [ ] Ruta inexistente devuelve la página 404 propia (no error de proxy).
 
 Prueba rápida de headers:
 
 ```bash
-curl -I https://awki.cl
+curl -I https://www.awki-ai.cl
 ```
 
 ---

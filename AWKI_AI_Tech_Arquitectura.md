@@ -376,7 +376,7 @@ a la normativa de datos personales.
   **Ejemplo de consulta M (conexión a la API):**
   ```m
   let
-      Origen = Json.Document(Web.Contents("https://api.awki.cl/api/v1/lecturas")),
+      Origen = Json.Document(Web.Contents("https://api.awki-ai.cl/api/v1/lecturas")),
       Lecturas = Table.FromList(Origen[data], Record.FieldValues, {"id","placa","timestamp","nodo","confianza"}),
       ConTipo = Table.TransformColumnTypes(Lecturas, {{"timestamp", type datetime}}),
       ConHoraLocal = Table.TransformColumns(ConTipo, {{"timestamp", each DateTimeZone.SwitchZone(_, -4), type datetime}})

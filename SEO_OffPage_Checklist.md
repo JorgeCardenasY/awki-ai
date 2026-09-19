@@ -9,9 +9,9 @@ que requieren cuentas y herramientas, y que no pueden ejecutarse solo con códig
 ## 1. Google Search Console (prioridad máxima)
 
 - [ ] Crear propiedad en [search.google.com/search-console](https://search.google.com/search-console).
-- [ ] Verificar el dominio (`awki.cl`) por DNS (recomendado) o etiqueta HTML.
+- [ ] Verificar el dominio (`awki-ai.cl`) por DNS (recomendado) o etiqueta HTML.
   - Si usas etiqueta HTML, añade a `app/layout.tsx` → `metadata.verification.google`.
-- [ ] Enviar el sitemap: `https://awki.cl/sitemap.xml`.
+- [ ] Enviar el sitemap: `https://www.awki-ai.cl/sitemap.xml`.
 - [ ] Inspeccionar la URL `/` y solicitar indexación.
 - [ ] Revisar el informe de cobertura tras 1–2 semanas (corregir errores 404/soft-404).
 

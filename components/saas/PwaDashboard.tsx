@@ -37,7 +37,7 @@ export default function PwaDashboard() {
             <span className="h-2.5 w-2.5 rounded-full bg-neon-amber" />
             <span className="h-2.5 w-2.5 rounded-full bg-neon-green" />
             <div className="ml-3 flex-1 rounded-sm bg-void px-3 py-1 font-mono text-[10px] text-ink-dim">
-              https://app.awki.cl/flota
+              https://app.awki-ai.cl/flota
             </div>
             <span className="flex items-center gap-1.5 font-mono text-[10px] text-neon-green">
               <span className="h-1.5 w-1.5 rounded-full bg-neon-green animate-pulse" />

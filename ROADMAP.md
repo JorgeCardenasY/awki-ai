@@ -87,8 +87,8 @@ Huella del servidor: **pico de build ≈ 945 MB** · **runtime persistente ≈ 3
 2. `git push -u origin main` (remoto ya configurado → `awki-ai`).
 
 ### Fase 1 — Infraestructura del servidor (una vez)
-3. DNS: `A awki.cl` y `A www` → IP del servidor.
-4. SSL: emitir Let's Encrypt para `awki.cl` y `www.awki.cl`.
+3. DNS: `A awki-ai.cl` y `A www.awki-ai.cl` → IP del servidor.
+4. SSL: emitir Let's Encrypt para `awki-ai.cl` y `www.awki-ai.cl`.
 5. Habilitar módulos Apache: `mod_rewrite`, `mod_proxy`, `mod_proxy_http`, `mod_headers`.
 
 ### Fase 2 — Despliegue (por cada release)
