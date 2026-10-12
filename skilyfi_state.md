@@ -3,7 +3,7 @@
 
 > **Este archivo es la fuente de verdad del proyecto.** Cada agente DEBE leer este archivo
 > antes de modificar código y actualizarlo al terminar su fase.
-> **Última actualización:** ✅ Todas las fases (1–5) completadas · Enjambre Skilyfi
+> **Última actualización:** ✅ Fases 1–5 completadas · Ajuste de navegación: enlace `/hardware/nodo-awki` retirado (contenido conservado)
 
 ---
 
@@ -122,3 +122,4 @@ AWKI/
 - [SEO] Fase 3 (contenido) implementada: `/glosario` (18 términos + JSON-LD `DefinedTermSet`), `/blog` con 4 artículos reales (`lib/blog.ts`, SSG con `generateStaticParams`), y FAQ en la home con JSON-LD `FAQPage` (`lib/faq.ts`).
 - [SEO] Fase 4 (off-page) — código listo: `components/seo/Analytics.tsx` (GA4 gtag vía `NEXT_PUBLIC_GA_MEASUREMENT_ID`), `sameAs` en JSON-LD (`SOCIAL_LINKS`). Acciones externas (Search Console, GA4, Google Business Profile, linkbuilding) documentadas en `SEO_OffPage_Checklist.md`.
 - [Deploy] Migrado a **sitio estático** (`output: "export"` en `next.config.ts`): se elimina el servidor Node, `mod_proxy` y el cron de build. Build local → subir `out/` por FTP. `.htaccess` reescrito para LiteSpeed (redirecciones, HTTPS, HSTS, URLs limpias→`.html`, caché `_next/static`, `404.html`, `ForceType image/png` para Open Graph). Añadido `export const dynamic = "force-static"` a `manifest.ts`, `opengraph-image.tsx`, `robots.ts` y `sitemap.ts` (requerido por Next 16 con `output:"export"`). Eliminados `scripts/copy-standalone.mjs` y el hook `postbuild`.
+- [Nav] Se eliminó el enlace de navegación a `/hardware/nodo-awki` (solo el enlace; el contenido de `app/hardware/nodo-awki/page.tsx` se conserva y la URL sigue indexada en `app/sitemap.ts`). Afecta a `components/layout/Header.tsx` (ítem `NODO`), `components/Hero.tsx` (CTA "Explorar el nodo") y `components/HomeOverview.tsx` (tarjeta "El Nodo Awki"; el hub pasa de cinco a cuatro pilares). Cambio documentado en `README.md` (sección Changelog).
