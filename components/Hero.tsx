@@ -86,12 +86,6 @@ export default function Hero() {
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <a
-            href="/hardware/nodo-awki"
-            className="clip-corner bg-neon-cyan px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-neon-cyan/80"
-          >
-            Explorar el nodo ▸
-          </a>
-          <a
             href="/tecnologia"
             className="clip-corner border border-surface-border bg-surface px-5 py-2.5 font-mono text-xs uppercase tracking-widest text-ink-dim transition-colors hover:border-neon-cyan/50 hover:text-neon-cyan"
           >

@@ -29,7 +29,7 @@ app/
   page.tsx              # home (hub): Hero + HomeOverview
   globals.css
   tecnologia/page.tsx   # Edge AI + LoRaWAN + arquitectura
-  hardware/nodo-awki/   # exploded view 3D + especificaciones
+  hardware/nodo-awki/   # exploded view 3D + especificaciones (sin enlace en navegación: solo URL directa)
   soluciones/page.tsx   # Ruta CH-11 + PWA + Power BI + roadmap
   privacidad/page.tsx   # Ley 21.719 + normativa
   contacto/page.tsx     # demo / contacto
@@ -68,4 +68,14 @@ genera la carpeta `out/` con HTML/CSS/JS puro, lista para subir a cualquier host
 - `out/` → contenido a subir por FTP a `public_html/`.
 - `.htaccess` → redirecciones, HTTPS, HSTS, caché y cabeceras de seguridad.
 - Guía completa: `DEPLOYMENT.md`.
+
+## Changelog
+
+- **Se eliminó el enlace de navegación a `/hardware/nodo-awki`** (solo el enlace,
+  no el contenido). La página `app/hardware/nodo-awki/page.tsx` **se conserva**
+  y sigue accesible por URL directa, además de permanecer indexada en
+  `app/sitemap.ts`. Se quitó el enlace de:
+  - `components/layout/Header.tsx` → ítem `NODO` del menú.
+  - `components/Hero.tsx` → botón CTA "Explorar el nodo".
+  - `components/HomeOverview.tsx` → tarjeta/pilar "El Nodo Awki" (el hub pasa de cinco a cuatro pilares).
 

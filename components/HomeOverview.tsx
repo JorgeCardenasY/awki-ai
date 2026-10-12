@@ -10,14 +10,6 @@ const PILLARS = [
     border: "border-neon-violet/40",
   },
   {
-    href: "/hardware/nodo-awki",
-    tag: "HARDWARE",
-    title: "El Nodo Awki",
-    desc: "Carcasa IP65/67 mimetizada en PETG/ASA, óptica STARVIS sin IR-cut y tren energético solar adaptativo a bajo cero.",
-    color: "text-neon-cyan",
-    border: "border-neon-cyan/40",
-  },
-  {
     href: "/soluciones",
     tag: "SOLUCIONES",
     title: "Rutas altoandinas",
@@ -50,7 +42,7 @@ export default function HomeOverview() {
       <div className="mx-auto max-w-7xl px-4 py-20 sm:py-28">
         <p className="section-kicker">[ EXPLORA LA PLATAFORMA ]</p>
         <h2 className="mt-3 font-sans text-3xl font-bold tracking-tight text-ink sm:text-5xl">
-          Un sistema, <span className="text-neon-cyan">cinco pilares</span>.
+          Un sistema, <span className="text-neon-cyan">cuatro pilares</span>.
         </h2>
         <p className="mt-5 max-w-2xl font-mono text-sm leading-relaxed text-ink-dim">
           Desde la electrónica de borde hasta la analítica en la nube. Explora

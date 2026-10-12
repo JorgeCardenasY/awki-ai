@@ -2,7 +2,6 @@ import Link from "next/link";
 
 const NAV = [
   { href: "/tecnologia", label: "TECNOLOGÍA" },
-  { href: "/hardware/nodo-awki", label: "NODO" },
   { href: "/soluciones", label: "SOLUCIONES" },
   { href: "/privacidad", label: "PRIVACIDAD" },
   { href: "/blog", label: "BLOG" },
