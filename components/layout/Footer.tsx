@@ -17,7 +17,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-surface-border bg-void">
       <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
           {/* Identidad */}
           <div>
             <div className="font-mono text-sm font-bold tracking-[0.2em] text-ink">
@@ -57,17 +57,6 @@ export default function Footer() {
                   )}
                 </li>
               ))}
-            </ul>
-          </div>
-
-          {/* Stack */}
-          <div>
-            <h3 className="section-kicker">Stack</h3>
-            <ul className="mt-4 space-y-2 font-mono text-xs text-ink-dim">
-              <li>Edge AI · YOLOv8-Nano INT8 · &gt;20 FPS</li>
-              <li>LoRaWAN CSS · Wio-E5 (STM32WLE5) · AU915</li>
-              <li>Django + PostgreSQL · TimescaleDB + PostGIS</li>
-              <li>PWA offline-first · IndexedDB</li>
             </ul>
           </div>
 
