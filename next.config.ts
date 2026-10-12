@@ -1,24 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Self-hosting en DirectAdmin: genera `.next/standalone/server.js` autocontenido.
-  // Requiere copiar `public/` y `.next/static/` a la carpeta standalone (ver DEPLOYMENT.md).
-  output: "standalone",
-  compress: true,
-  poweredByHeader: false,
-  async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-        ],
-      },
-    ];
-  },
+  // Sitio 100% estático (SSG). Se compila a HTML/CSS/JS puro en `out/` y se
+  // sirve directamente desde cualquier hosting (LiteSpeed/Apache/Nginx) sin
+  // servidor Node. Las cabeceras de seguridad y redirecciones se aplican en
+  // `.htaccess` (output:"export" no admite headers()/rewrites/redirects).
+  output: "export",
 };
 
 export default nextConfig;

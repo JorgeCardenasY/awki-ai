@@ -1,37 +1,42 @@
-# Apache 2.4 + mod_rewrite + mod_proxy + mod_headers
-# Requisitos (DirectAdmin): habilitar `mod_proxy`, `mod_proxy_http`, `mod_rewrite` y `mod_headers`.
-#
-# Next.js (output: standalone) debe ejecutarse con:
-#     node .next/standalone/server.js
-# escuchando en 127.0.0.1:3000 (puerto por defecto; debe coincidir con el puerto
-# asignado en "Setup Node.js App" de DirectAdmin, o ajustar la variable PORT).
-#
-# ⚠️ En DirectAdmin, desactiva el "auto-proxy" de la Node.js App para evitar un
-# doble reverse proxy (este .htaccess ya hace el proxy hacia el servidor Node).
+# LiteSpeed / Apache 2.4 — Sitio estático (Next.js output: "export")
+# Requisitos: mod_rewrite + mod_headers habilitados.
+# No requiere servidor Node ni mod_proxy (el sitio es HTML/CSS/JS puro).
 
 RewriteEngine On
 
-# Mantener un unico dominio canonico: www.awki-ai.cl (apex redirige a www).
+# 1) Dominio canónico: www.awki-ai.cl (apex redirige a www)
 RewriteCond %{HTTP_HOST} !^www\.awki-ai\.cl$ [NC]
 RewriteRule ^ https://www.awki-ai.cl%{REQUEST_URI} [R=301,L]
 
-# Forzar HTTPS tanto en conexiones directas como detras de un proxy TLS.
+# 2) Forzar HTTPS (directo o detrás de proxy TLS)
 RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !^https$ [NC]
 RewriteRule ^ https://www.awki-ai.cl%{REQUEST_URI} [R=301,L]
 
-# Cache prolongada para assets versionados de Next.js.
-RewriteRule ^_next/static/(.*)$ http://127.0.0.1:3000/_next/static/$1 [P,L,NE]
+# 3) URLs limpias -> .html (output:"export" genera /ruta.html)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\.(css|js|svg|png|jpe?g|webp|gif|ico|woff2?|ttf|json|xml|webmanifest|txt)$ [NC]
+RewriteRule ^(.+?)/?$ $1.html [L]
 
-# El resto de rutas se resuelve mediante el servidor Next.js.
-RewriteRule ^ http://127.0.0.1:3000%{REQUEST_URI} [P,L,NE]
+# 4) Marcar assets versionados para caché prolongada
+RewriteRule ^_next/static/ - [E=CACHE_ASSET:1]
 
-ProxyPreserveHost On
-ProxyTimeout 60
+# 5) Página 404 propia
+ErrorDocument 404 /404.html
 
+# 6) Forzar Content-Type correcto para la imagen Open Graph (el export la
+#    genera sin extensión; así los crawlers sociales la aceptan).
+<FilesMatch "^opengraph-image$">
+    ForceType image/png
+</FilesMatch>
+
+# 7) Cabeceras de seguridad + caché + HSTS
 <IfModule mod_headers.c>
-    <FilesMatch "^_next/static/">
-        Header set Cache-Control "public, max-age=31536000, immutable"
-    </FilesMatch>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header set Cache-Control "public, max-age=31536000, immutable" env=CACHE_ASSET
 </IfModule>

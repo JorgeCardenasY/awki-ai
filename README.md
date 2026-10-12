@@ -17,7 +17,7 @@ celular.
 
 ```bash
 npm run dev      # servidor de desarrollo
-npm run build    # build de producción
+npm run build    # build de producción (genera out/ estático)
 npm run lint     # ESLint
 ```
 
@@ -58,4 +58,14 @@ lib/            # gsap.ts, site.ts (constantes SEO)
 El frontend es 100% interactivo con simulaciones y mockups. Los contratos de API
 (`services/api.ts`) están preparados para conectarse a **Django + PostgreSQL
 (TimescaleDB + PostGIS)** sin cambiar la interfaz.
+
+## Despliegue
+
+El sitio es **100% estático** (`output: "export"` en `next.config.ts`): `npm run build`
+genera la carpeta `out/` con HTML/CSS/JS puro, lista para subir a cualquier hosting
+(LiteSpeed/Apache/Nginx) **sin servidor Node**.
+
+- `out/` → contenido a subir por FTP a `public_html/`.
+- `.htaccess` → redirecciones, HTTPS, HSTS, caché y cabeceras de seguridad.
+- Guía completa: `DEPLOYMENT.md`.
 

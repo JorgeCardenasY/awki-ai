@@ -1,40 +1,38 @@
-# ROADMAP — Operativización de AWKI AI TECH en DirectAdmin
+# ROADMAP — Operativización de AWKI AI TECH (sitio estático)
 
-Documento de planificación que define **cómo dejar el servidor operativo** usando solo
-las tecnologías que el servidor ya provee, y dejando en el repositorio **únicamente**
-aquello que el servidor no tiene. Objetivo transversal: **evitar la duplicación de archivos**.
+Documento de planificación que define **cómo dejar el servidor operativo** usando el
+mínimo de infraestructura. El sitio es **estático** (`output: "export"`): se compila
+en local y se sube por FTP. No hay runtime Node, ni proxy, ni cron en el servidor.
 
-> Complementa a `DEPLOYMENT.md` (pasos técnicos detallados). Aquí está el *por qué* y el *orden*.
+> Complementa a `DEPLOYMENT.md` (pasos técnicos detallados). Aquí está el *por qué* y
+> el *orden*.
 
 ---
 
 ## 1. Principio rector
 
-> **La infraestructura vive en el servidor; el código vive en el repositorio.**
+> **El build vive en tu máquina; el servidor solo sirve archivos estáticos.**
 
-El servidor DirectAdmin **ya provee** runtimes e infraestructura (Node.js, Python, Git,
-Apache, SSL, DNS, cron, bases de datos). Por lo tanto, el repo solo debe contener lo que
-el servidor **no** tiene: código fuente, manifiesto de dependencias, configuración y
-assets propios del sitio.
+El servidor (LiteSpeed, hosting compartido, sin SSH) solo necesita **servir archivos
+estáticos** (`mod_rewrite` + `mod_headers`). Por lo tanto, el repositorio contiene el
+código fuente y el `.htaccess`; el servidor recibe únicamente el resultado del build
+(`out/`).
 
 ---
 
 ## 2. Mapeo de tecnologías (proyecto ↔ servidor)
 
-| Necesidad del proyecto | Tecnología del servidor | ¿Dónde vive? |
+| Necesidad del proyecto | Tecnología | ¿Dónde vive? |
 |---|---|---|
-| Runtime Node.js (≥ 20.9) | Setup Node.js App (selector Node) | Servidor (no se versiona) |
-| Instalar deps + build | Trabajo Cron (`npm ci && npm run build`) — sin terminal | Servidor |
-| Reverse proxy Apache → Node | Manipuladores Apache + `.htaccess` (mod_proxy) | Servidor |
-| HTTPS / dominio canónico | SSL/TLS Certificates + Dominios + DNS | Servidor |
-| Despliegue | FTP/File Manager (subida) — Git solo para versionar | Servidor |
-| Backend futuro (Django) | Setup Python App | Servidor (futuro) |
+| Compilación estática | `next build` (`output: "export"`) | Local (tu máquina) |
+| Servir HTML/CSS/JS | LiteSpeed (static) | Servidor |
+| Redirecciones / HTTPS / HSTS / caché | `.htaccess` (`mod_rewrite` + `mod_headers`) | Servidor (vía repo) |
+| HTTPS / dominio canónico | SSL/TLS + DNS (ya activos) | Servidor |
+| Despliegue | FTP / File Manager (subir `out/`) | Servidor |
+| Analytics (GA4) | `NEXT_PUBLIC_GA_MEASUREMENT_ID` en build-time | Local (build) |
+| Backend futuro (Django) | Entorno con Python + persistencia | Servidor (futuro) |
 | BBDD futura (PostgreSQL) | Base de Datos | Servidor (futuro) |
-| Seguridad en borde | Web Application Firewall + ImunifyAV | Servidor |
-| Tareas programadas | Trabajo Cron | Servidor (futuro) |
-| Monitoreo / logs | Resource Usage + Site summary & logs | Servidor |
-| Respaldo | Backup and Restore | Servidor |
-| ~~WordPress / Joomla / Softaculous / SitePad / PHP~~ | — | ❌ **No usar** (stack ajeno = duplicación) |
+| ~~Node.js / mod_proxy / cron build~~ | — | ❌ **Ya no se usa** (sitio estático) |
 
 ---
 
@@ -45,80 +43,60 @@ assets propios del sitio.
 | Código fuente (`app/`, `components/`, `lib/`, `services/`) | Local (repo) | Única fuente |
 | `package.json` + `package-lock.json` | Local (repo) | Única fuente de dependencias |
 | Config (`next.config.ts`, `tailwind`, `tsconfig`, `.htaccess`) | Local (repo) | Única fuente |
-| Assets propios (`public/`, `icon.svg`, `opengraph-image`) | Local (repo) | Única fuente |
-| `.env.example` (plantilla, sin secretos) | Local (repo) | Documenta variables |
-| Runtime Node.js / npm | Servidor (Setup Node.js App) | **No** se versiona |
-| `node_modules/` | Servidor (vía `npm ci`) | Gitignored — **nunca** se sube |
-| `.next/` (build + standalone) | Servidor (vía `npm run build`) | Gitignored — **nunca** se sube |
-| Secretos (`.env.local`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`) | Servidor (solo) | Gitignored — **nunca** se sube |
+| `out/` (build estático) | Local (generado) → subido | Gitignored — **nunca** se commitea |
+| Secretos (`.env.local`) | Local (solo) | Gitignored — **nunca** se sube |
+| `node_modules/`, `.next/` | Local (solo) | Gitignored — **nunca** se sube |
 
 ---
 
-## 4. Estimación de tamaño (antes / después)
-
-Medición real del proyecto:
+## 4. Estimación de tamaño
 
 | Artefacto | Tamaño |
 |---|---|
-| Código fuente (sin `node_modules`, `.next`, `.git`) | **463 KB** · 64 archivos |
-| `package-lock.json` | ~250 KB |
-| `node_modules` (completo, dev + prod) | **557 MB** |
-| `.next` (build completo) | **388 MB** |
-| `.next/standalone` (bundle runtime) | **33 MB** |
-| `.git` (historial) | ~312 KB |
+| Código fuente (sin `node_modules`, `.next`, `.git`, `out`) | ~463 KB |
+| `out/` (build estático listo para subir) | **~3.4 MB** (113 archivos) |
+| `node_modules` (dev + prod, solo local) | 557 MB (no se sube) |
 
-Tras implementar los cambios:
-
-| Métrica | Antes | Después | Ahorro |
-|---|---|---|---|
-| Repositorio Git (lo que se versiona/clona) | riesgo de 557 MB si se commitea | **~470 KB** | ~**−99.9 %** |
-| Dependencias que el servidor mantiene **para correr** | 557 MB | **28 MB** (runtime standalone) | **−95 %** |
-| Transferencia de build | subir 388 MB | 0 (se builda in-situ) | **−388 MB** |
-
-Huella del servidor: **pico de build ≈ 945 MB** · **runtime persistente ≈ 34 MB**.
-(En Linux el `node_modules` será algo menor: no instala binarios nativos de otras plataformas.)
+> Ahorro vs. el enfoque Node standalone anterior: **0 MB de runtime en el servidor**,
+> sin `node_modules`, sin `.next`, sin proceso persistente.
 
 ---
 
 ## 5. Roadmap por fases
 
 ### Fase 0 — Consolidar el repositorio (una vez, local)
-1. `git add -A && git commit -m "Preparar despliegue standalone en DirectAdmin"`.
-2. `git push -u origin main` (remoto ya configurado → `awki-ai`).
+1. `git add -A && git commit -m "Migrar a sitio estático (output: export)"`.
+2. `git push -u origin main`.
 
 ### Fase 1 — Infraestructura del servidor (una vez)
-3. DNS: `A awki-ai.cl` y `A www.awki-ai.cl` → IP del servidor.
-4. SSL: emitir Let's Encrypt para `awki-ai.cl` y `www.awki-ai.cl`.
-5. Habilitar módulos Apache: `mod_rewrite`, `mod_proxy`, `mod_proxy_http`, `mod_headers`.
+3. DNS: `A awki-ai.cl` y `A www.awki-ai.cl` → IP del servidor (✅ ya hecho).
+4. SSL: Let's Encrypt para `awki-ai.cl` y `www.awki-ai.cl` (✅ ya hecho).
+5. Confirmar `mod_rewrite` y `mod_headers` activos (LiteSpeed los trae por defecto).
 
 ### Fase 2 — Despliegue (por cada release)
-6. Subir los ficheros por FTP/File Manager (sin SSH) a `domains/awki-ai.cl/public_html/`.
-7. Setup Node.js App: Node 20/22, start `node .next/standalone/server.js`, puerto `3000`.
-8. Definir `NEXT_PUBLIC_GA_MEASUREMENT_ID` **antes** del build.
-9. Build sin terminal: **Trabajo Cron** con `cd .../public_html && npm ci && npm run build`
-   (el `postbuild` copia `public/` y `.next/static/` automáticamente); luego borrar el cron.
-10. Desactivar auto-proxy de DirectAdmin (el `.htaccess` ya proxea) y pulsar **Start**.
+6. Build local: `npm run build` (con `NEXT_PUBLIC_GA_MEASUREMENT_ID`).
+7. Subir el contenido de `out/` + `.htaccess` por FTP a `public_html/`.
 
 ### Fase 3 — Verificación
-11. HTTPS, headers de seguridad, sitemap/robots, fuentes, página 404 propia.
+8. HTTPS, redirecciones, headers, sitemap/robots, 404 propia.
 
 ### Fase 4 — Operación continua
-12. Backup programado (Backup and Restore) + monitoreo (Resource Usage / logs).
+9. Backup del servidor + monitoreo (Resource Usage / logs del panel).
 
-### Fase 5 — Expansión futura (backend real, sin duplicar)
-13. PostgreSQL (Base de Datos) + Django (Setup Python App) → conectar `services/api.ts`
-    a endpoints reales reutilizando los contratos ya definidos.
+### Fase 5 — Expansión futura (backend real)
+10. Django + PostgreSQL en un entorno con Python/persistencia → conectar
+    `services/api.ts` a endpoints reales reutilizando los contratos ya definidos.
 
 ---
 
-## 6. Decisiones críticas (para no duplicar)
+## 6. Decisiones críticas
 
-1. **Un único reverse proxy.** Elegir `.htaccess` (mod_proxy) **o** el auto-proxy de
-   DirectAdmin — nunca ambos (doble proxy → redirección infinita). Recomendado: `.htaccess`.
-2. **Build en el servidor, no en local.** Evita subir `.next` y el desajuste de binarios
-   nativos Windows/Linux (`sharp`, `@swc`).
-3. **Instalar deps en el servidor con `npm ci`.** `package-lock.json` versionado garantiza
-   dependencias idénticas (sin deriva de versiones).
-4. **Secretos solo en el servidor.** `.env.local` gitignored; `.env.example` versionado
-   (plantilla sin valores reales).
-
+1. **Sitio estático, no Node.** El sitio no usa SSR/ISR ni rutas API →
+   `output: "export"` elimina runtime, proxy y cron. (Si en el futuro se añade un
+   backend con SSR, se reevalúa un hosting con Node/SSH.)
+2. **Build en local, no en el servidor.** Evita depender de un entorno de build en el
+   hosting compartido.
+3. **Un solo `.htaccess`.** Redirecciones, HTTPS, HSTS, caché y cabeceras de seguridad
+   en un único archivo versionado.
+4. **Secretos solo en local.** `NEXT_PUBLIC_GA_MEASUREMENT_ID` se inyecta en build-time;
+   `.env.local` gitignored.

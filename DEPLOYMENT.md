@@ -1,251 +1,126 @@
-# Despliegue de AWKI AI TECH en DirectAdmin (Node.js + Apache)
+# Despliegue de AWKI AI TECH — Sitio estático (Next.js `output: "export"`)
 
-Guía paso a paso para publicar este proyecto en un servidor DirectAdmin usando la
-funcionalidad **Setup Node.js App** y el reverse proxy definido en `.htaccess`.
+Guía para publicar este proyecto en hosting compartido **sin SSH ni servidor Node**.
+El sitio es 100% estático (SSG): se compila en local a HTML/CSS/JS puro dentro de
+`out/` y se sube por FTP. No requiere `Setup Node.js App`, ni `mod_proxy`, ni cron
+de build, ni proceso persistente.
 
-> El proyecto se sirve en modo **`output: "standalone"`** (ver `next.config.ts`), lo que
-> genera un `server.js` autocontenido con un `node_modules` mínimo: menos uso de disco/RAM
-> y arranque más rápido.
+> Compatible con **LiteSpeed** y **Apache**. El servidor de producción de este
+> proyecto es **LiteSpeed** (`Server: LiteSpeed`), por lo que las reglas se
+> escribieron con `mod_rewrite`/`mod_headers`, soportados por ambos.
 
 ---
 
 ## 🚀 Paso a paso rápido (FTP + panel web, sin SSH)
 
-### 1) Qué subir por FileZilla → a `domains/awki-ai.cl/public_html/`
+### 1) Compilar en local (en tu máquina)
 
-```
-app/
-components/
-lib/
-services/
-scripts/              (incluye copy-standalone.mjs, usado por `postbuild`)
-package.json
-package-lock.json
-next.config.ts
-tsconfig.json
-tailwind.config.ts
-postcss.config.mjs
-eslint.config.mjs     (opcional: solo para `npm run lint`)
-.htaccess             ⚠️ crítico: reverse proxy Apache
-.env.example          (opcional: plantilla de variables)
-next-env.d.ts         (opcional: Next lo regenera solo)
+```powershell
+cd c:\Users\user\Desktop\AWKI
+$env:NEXT_PUBLIC_GA_MEASUREMENT_ID = "G-3Y9R6BPQ0E"   # GA4 (opcional)
+npm ci
+npm run build        # genera ./out/ (HTML/CSS/JS estático)
 ```
 
-> `public/` está vacía: no hace falta subirla.
-> Los `*.md` de documentación (README, DEPLOYMENT, ROADMAP, SEO_*) son opcionales.
+> `NEXT_PUBLIC_*` se incrusta en el bundle **en tiempo de build**. Si la cambias,
+> debes re-buildar.
+>
+> `next/font/google` descarga y auto-hospeda las fuentes durante el build: se
+> necesita salida a internet **en tu máquina**, no en el servidor.
+
+### 2) Qué subir por FileZilla → a `public_html/`
+
+Sube **el contenido** de `out/` (todo lo que está *dentro*, NO la carpeta `out`):
+
+```
+index.html, 404.html, sitemap.xml, robots.txt, manifest.webmanifest,
+opengraph-image, icon.svg,
+tecnologia.html, contacto.html, glosario.html, privacidad.html,
+soluciones.html, blog.html, *.txt (payloads RSC),
+blog/, hardware/, _next/
+```
+
+Y aparte sube el `.htaccess` de la raíz del proyecto a `public_html/.htaccess`.
+
+> ⚠️ En FileZilla activa "Mostrar archivos ocultos" (`Servidor → Forzar mostrar
+> archivos ocultos`) porque `.htaccess` empieza con punto.
+>
+> ⚠️ Incluye **todos** los archivos `.txt` (`index.txt`, `blog.txt`,
+> `__next._*.txt`, …): son payloads RSC que Next usa para la navegación fluida
+> entre páginas.
 
 ### ⛔ Qué NO subir (nunca)
 
 ```
-node_modules/   → 557 MB de dependencias (el servidor las descarga con `npm ci`)
-.next/          → 388 MB de build (el servidor lo genera con `npm run build`)
-.git/           → historial local (no se necesita en el servidor)
-.env.local      → secretos (se crea directamente en el servidor)
+node_modules/   # no se necesita (el build ya está en out/)
+.next/          # no se necesita (el resultado es out/)
+.git/           # historial local
+.env.local      # secretos
+out/            # sube su CONTENIDO, no la carpeta en sí
 ```
 
-### 2) DNS y SSL (panel)
+---
 
-1. **Administración DNS**: registro `A` para `awki-ai.cl` y otro para `www.awki-ai.cl` → IP del servidor.
-2. **SSL/TLS Certificates**: Let's Encrypt cubriendo `awki-ai.cl` y `www.awki-ai.cl`.
+## 1. Por qué estático (y no Node)
 
-### 3) Crear la Node.js App (panel)
+- El sitio no tiene rutas API (`app/api`), ni `middleware`, ni `rewrites`/`redirects`,
+  ni data fetching de servidor. Los mocks viven en `services/api.ts` (solo cliente).
+- `output: "export"` elimina la necesidad de un proceso Node persistente, del reverse
+  proxy (`mod_proxy`) y del cron de build → menos piezas móviles, sin 503, y
+  compatible con LiteSpeed compartido sin SSH.
 
-**"Setup Node.js App"** → *Create Application*:
+## 2. Qué hace el `.htaccess`
 
-| Campo | Valor |
+| Regla | Detalle |
 |---|---|
-| Node.js version | 20 o 22 (≥ 20.9) |
-| Application root | `/home/USUARIO/domains/awki-ai.cl/public_html` |
-| Startup command | `node .next/standalone/server.js` |
-| Port | `3000` |
-| Environment variables | `PORT=3000` (+ `NEXT_PUBLIC_GA_MEASUREMENT_ID` opcional) |
+| Dominio canónico | `awki-ai.cl` → `www.awki-ai.cl` (301) |
+| HTTPS | `http` → `https` (directo o tras proxy TLS) |
+| URLs limpias | `/tecnologia` → `tecnologia.html` (rewrite) |
+| Caché | `/_next/static/` → `max-age=31536000, immutable` |
+| 404 propia | `ErrorDocument 404 /404.html` |
+| Open Graph | `ForceType image/png` para `opengraph-image` (sin extensión) |
+| Seguridad | HSTS + `X-Frame-Options` + `nosniff` + `Referrer-Policy` + `Permissions-Policy` |
 
-> ⚠️ Desactiva el "auto-proxy" de DirectAdmin: el `.htaccess` ya hace el proxy.
+> Requisitos del servidor: módulos `mod_rewrite` y `mod_headers` habilitados.
+> LiteSpeed los soporta; las redirecciones ya están activas en producción.
 
-### 4) Compilar en el servidor (una sola vez, sin terminal)
+## 3. Configurar el build (variables)
 
-Como el panel no tiene terminal, usa **"Trabajo Cron"** para ejecutar el build:
-
-1. Ve a **"Trabajo Cron"** → *Create New Cron Job*.
-2. Comando:
-
-   ```bash
-   cd /home/USUARIO/domains/awki-ai.cl/public_html && npm ci && npm run build
-   ```
-
-3. Configúralo para que se ejecute (p. ej. cada minuto), espera **2–4 minutos** a que
-   termine (`npm ci` descarga las dependencias) y **borra el cron job** al finalizar.
-
-> ⚠️ No hagas el build en Windows y subas `.next`: los binarios nativos (`@swc`, `sharp`)
-> son incompatibles con Linux. El build debe ocurrir en el servidor.
->
-> ⚠️ Si el cron falla con `npm: command not found`, usa la ruta completa de `node`/`npm`
-> (la versión instalada por "Setup Node.js App", p. ej. `/usr/local/node20/bin/npm`).
-
-### 5) Arrancar la app
-
-No hay que copiar nada a mano: el script `postbuild` (ver `package.json`) ya copió
-`public/` y `.next/static/` al standalone durante el build.
-
-Solo pulsa **Start/Restart** en la Node.js App.
-
-### 6) Verificar
-
-Abre `https://www.awki-ai.cl`: HTTPS, fuentes, 3D, `sitemap.xml` y `robots.txt`.
-
----
-
-## 1. Prerequisitos
-
-| Requisito | Detalle | Dónde verificarlo |
-|---|---|---|
-| Dominio | `awki-ai.cl` y `www.awki-ai.cl` apuntando a la IP del servidor (registros A) | "Administración DNS" / tu registrador |
-| Node.js | **≥ 20.9.0** (recomendado 20 LTS o 22 LTS) | "Setup Node.js App" → selector de versión |
-| Módulos Apache | `mod_rewrite`, `mod_proxy`, `mod_proxy_http`, `mod_headers` | "Manipuladores Apache" / soporte |
-| Acceso | File Manager/FTP (o Git) para subir el código — sin SSH | — |
-| Salida a internet durante el build | `next/font/google` descarga las fuentes en `npm run build` | prueba de red en el servidor |
-
----
-
-## 2. Subir el código al servidor
-
-Elige **una** de estas opciones:
-
-### Opción A — Git (recomendada)
-
-1. Confirma/crea un remoto y sube todo el código (hoy el repo solo tiene el commit inicial):
-
-   ```bash
-   git add -A
-   git commit -m "Preparar despliegue standalone en DirectAdmin"
-   git remote add origin git@github.com:TU_USUARIO/awki.git
-   git push -u origin main
-   ```
-
-2. En DirectAdmin → **Git** → *Create Repository* → pega la URL y clona dentro de
-   `domains/awki-ai.cl/` (o el directorio que uses).
-
-### Opción B — File Manager / FTP
-
-1. Sube todo el proyecto **excepto** `node_modules`, `.next`, `.git` y `.env*` a un
-   directorio como `domains/awki-ai.cl/awki/`.
-
-> ⚠️ No subas `node_modules` ni `.next`: se generan en el servidor durante el build.
-> `.env.local` con secretos tampoco debe versionarse (ya está en `.gitignore`).
-
----
-
-## 3. Configurar variables de entorno (antes del build)
-
-Crea `.env.local` en la raíz del proyecto (o define las variables en "Setup Node.js App"):
-
-```bash
-# Google Analytics 4 — solo si tienes el ID (opcional)
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```powershell
+$env:NEXT_PUBLIC_GA_MEASUREMENT_ID = "G-3Y9R6BPQ0E"
 ```
 
-> `NEXT_PUBLIC_*` se incrusta en el bundle **en tiempo de build**. Si lo cambias,
-> debes re-buildar.
+> `NEXT_PUBLIC_*` se incrusta en build-time; no hay variables de entorno en el
+> servidor.
 
----
-
-## 4. Build en el servidor
-
-Desde la raíz del proyecto. Sin terminal, hazlo con un **Trabajo Cron** (ver el paso 4 del
-"Paso a paso rápido"):
-
-```bash
-npm install        # instala dependencias (usa package-lock.json: `npm ci` si prefieres)
-npm run build      # genera .next/ con la carpeta standalone (y postbuild copia assets)
-```
-
-Si el build falla por falta de red (fuentes de Google), revisa que el servidor tenga
-salida a internet o contacta a soporte para permitir `fonts.googleapis.com`.
-
----
-
-## 5. Copiar assets al standalone (automático)
-
-`output: "standalone"` NO copia los assets estáticos por sí solo, pero este proyecto lo
-automatiza con el script `postbuild` (`scripts/copy-standalone.mjs`), que `npm run build`
-ejecuta solo. No hay que copiar nada a mano.
-
-Resultado esperado:
-
-```
-.next/standalone/
-├── server.js
-├── package.json
-├── node_modules/        # solo dependencias de runtime
-├── public/
-└── .next/static/
-```
-
----
-
-## 6. Crear la Node.js App en DirectAdmin
-
-Ir a **"Setup Node.js App"** → *Create Application*:
-
-| Campo | Valor |
-|---|---|
-| Node.js version | 20 LTS o 22 LTS (≥ 20.9) |
-| Application root / directory | la raíz del proyecto (`/home/USUARIO/domains/awki-ai.cl/awki`) |
-| Startup file / command | `node .next/standalone/server.js` |
-| Port | `3000` (debe coincidir con el puerto del `.htaccess`) |
-| Environment variables | `PORT=3000`, `NEXT_PUBLIC_GA_MEASUREMENT_ID=...` (opcional) |
-
-### Importante sobre el proxy
-
-- **Desactiva el "auto-proxy" / "Proxy to domain"** de la Node.js App. El `.htaccess` de
-  este proyecto ya hace el reverse proxy (Apache → `127.0.0.1:3000`).
-- Si prefieres usar el auto-proxy de DirectAdmin, **elimina** las reglas `[P]` de
-  `mod_proxy` del `.htaccess` para evitar un doble proxy (mantén solo HTTPS/HSTS/cache).
-
----
-
-## 7. Verificación post-deploy
-
-Desde un navegador y por línea de comandos (`curl -I https://www.awki-ai.cl`):
-
-- [ ] `https://www.awki-ai.cl` carga (HTTPS válido, sin warning).
-- [ ] `http://awki-ai.cl` y `http://www.awki-ai.cl` redirigen 301 a `https://www.awki-ai.cl`.
-- [ ] Headers de seguridad presentes: `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`.
-- [ ] `https://www.awki-ai.cl/_next/static/...` sirve assets con `Cache-Control: public, max-age=31536000, immutable`.
-- [ ] Fuentes (`Space Grotesk`, `JetBrains Mono`) cargan correctamente (no fallback).
-- [ ] `https://www.awki-ai.cl/sitemap.xml` y `https://www.awki-ai.cl/robots.txt` responden.
-- [ ] Ruta inexistente devuelve la página 404 propia (no error de proxy).
-
-Prueba rápida de headers:
+## 4. Verificación post-deploy
 
 ```bash
 curl -I https://www.awki-ai.cl
 ```
 
----
+- [ ] `https://www.awki-ai.cl` → 200 (carga el sitio, sin 503).
+- [ ] `/tecnologia`, `/blog`, `/glosario`, `/contacto`, `/blog/<slug>` → 200.
+- [ ] `/sitemap.xml` y `/robots.txt` → 200.
+- [ ] `http://awki-ai.cl` → 301 a `https://www.awki-ai.cl/`.
+- [ ] Ruta inexistente → `404` propia.
+- [ ] Headers de seguridad presentes (HSTS, nosniff, X-Frame-Options, Referrer-Policy).
 
-## 8. Actualizar en el futuro
+## 5. Actualizar en el futuro
 
-Cada vez que publiques cambios:
-
-```bash
-git pull                          # o sube los archivos nuevos
-npm install                       # si cambió package.json
-npm run build                     # re-build (postbuild copia assets automáticamente)
+```powershell
+npm run build    # re-build (con la variable GA si cambió)
+# subir de nuevo el contenido de out/ + .htaccess
 ```
 
-> Sin terminal, ejecuta el build con un **Trabajo Cron** (igual que el paso 4 del
-> "Paso a paso rápido") y luego pulsa el botón *Restart* de "Setup Node.js App".
+No hay que tocar el servidor: sin SSH, sin cron, sin reiniciar ningún proceso.
 
----
-
-## 9. Troubleshooting
+## 6. Troubleshooting
 
 | Síntoma | Causa probable | Solución |
 |---|---|---|
-| 502 / 503 Bad Gateway | La Node.js App no está corriendo o el puerto no coincide | Verifica que `node .next/standalone/server.js` escuche en `3000` y que el `.htaccess` use el mismo puerto |
-| El sitio carga pero sin estilos | No se copió `.next/static/` al standalone | Repite el paso 5 |
-| Fuentes en fallback (serif por defecto) | Falló la descarga de `next/font/google` en el build | Confirma salida a internet durante `npm run build` |
-| Redirección infinita | Doble proxy (auto-proxy de DirectAdmin + `.htaccess`) | Desactiva uno de los dos (ver sección 6) |
-| Error "requires Node >=20.9.0" | Versión de Node antigua | Selecciona Node 20/22 en "Setup Node.js App" |
-| gtag/GA4 no aparece | `NEXT_PUBLIC_GA_MEASUREMENT_ID` vacío o definido después del build | Define la variable antes de `npm run build` y re-builda |
+| 404 en `/tecnologia` pero `tecnologia.html` existe | Falta `mod_rewrite` o la regla de URLs limpias | Revisa `.htaccess` (regla #3) y que el servidor tenga `mod_rewrite` |
+| El sitio carga sin estilos | No se subió `_next/` completo | Sube de nuevo todo el contenido de `out/` |
+| Open Graph no se muestra en RRSS | `opengraph-image` se sirve sin `image/png` | Verifica `ForceType image/png` en `.htaccess` |
+| 503 (estado anterior) | Se esperaba un servidor Node | Ya no aplica: el sitio ahora es estático |
+| gtag/GA4 no aparece | `NEXT_PUBLIC_GA_MEASUREMENT_ID` vacío al build | Define la variable antes de `npm run build` |

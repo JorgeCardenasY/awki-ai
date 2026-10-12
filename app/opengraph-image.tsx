@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+export const dynamic = "force-static";
+
 export const alt =
   "Awki AI Tech — Trazabilidad logística sin cobertura celular en el altiplano";
 export const size = { width: 1200, height: 630 };
