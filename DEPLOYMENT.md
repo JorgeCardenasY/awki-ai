@@ -59,6 +59,18 @@ node_modules/   # no se necesita (el build ya está en out/)
 out/            # sube su CONTENIDO, no la carpeta en sí
 ```
 
+> **En resumen: todo el código fuente y la configuración quedan en local.** Al
+> servidor solo van **dos** cosas — el contenido de `out/` (resultado del build) y
+> el `.htaccess`. Por lo tanto, tampoco se sube ninguno de estos:
+>
+> ```
+> app/  components/  lib/  services/  public/     # código fuente (queda local)
+> package.json  package-lock.json                 # manifiesto de dependencias
+> next.config.ts  tsconfig.json                   # configuración del build
+> tailwind.config.ts  postcss.config.mjs  eslint.config.mjs
+> next-env.d.ts  *.md                             # documentación
+> ```
+
 ---
 
 ## 1. Por qué estático (y no Node)
