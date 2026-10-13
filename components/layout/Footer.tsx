@@ -18,17 +18,46 @@ export default function Footer() {
     <footer className="border-t border-surface-border bg-void">
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
-          {/* Identidad */}
-          <div>
-            <div className="font-mono text-sm font-bold tracking-[0.2em] text-ink">
-              AWKI_AI_TECH
+          {/* Identidad + Recursos */}
+          <div className="flex flex-col gap-10">
+            <div>
+              <div className="font-mono text-sm font-bold tracking-[0.2em] text-ink">
+                AWKI_AI_TECH
+              </div>
+              <p className="mt-3 max-w-xs font-mono text-xs leading-relaxed text-ink-dim">
+                Plataforma SaaS de trazabilidad logística para la Macrozona Norte
+                de Chile y rutas altoandinas sin cobertura celular.
+              </p>
+              <div className="mt-4 flex items-center gap-2 font-mono text-[10px] text-neon-cyan">
+                <span className="animate-blink">▊</span> awki@node:~$ ./uptime.sh
+              </div>
             </div>
-            <p className="mt-3 max-w-xs font-mono text-xs leading-relaxed text-ink-dim">
-              Plataforma SaaS de trazabilidad logística para la Macrozona Norte
-              de Chile y rutas altoandinas sin cobertura celular.
-            </p>
-            <div className="mt-4 flex items-center gap-2 font-mono text-[10px] text-neon-cyan">
-              <span className="animate-blink">▊</span> awki@node:~$ ./uptime.sh
+
+            {/* Recursos */}
+            <div>
+              <h3 className="section-kicker">Recursos</h3>
+              <ul className="mt-4 space-y-2 font-mono text-xs text-ink-dim">
+                <li>
+                  <Link href="/blog" className="transition-colors hover:text-neon-cyan">
+                    Blog técnico
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/glosario" className="transition-colors hover:text-neon-cyan">
+                    Glosario
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacidad" className="transition-colors hover:text-neon-cyan">
+                    Privacidad (Ley 21.719)
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contacto" className="transition-colors hover:text-neon-cyan">
+                    Solicitar demo
+                  </Link>
+                </li>
+              </ul>
             </div>
           </div>
 
@@ -60,40 +89,20 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Recursos */}
-          <div>
-            <h3 className="section-kicker">Recursos</h3>
-            <ul className="mt-4 space-y-2 font-mono text-xs text-ink-dim">
-              <li>
-                <Link href="/blog" className="transition-colors hover:text-neon-cyan">
-                  Blog técnico
-                </Link>
-              </li>
-              <li>
-                <Link href="/glosario" className="transition-colors hover:text-neon-cyan">
-                  Glosario
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacidad" className="transition-colors hover:text-neon-cyan">
-                  Privacidad (Ley 21.719)
-                </Link>
-              </li>
-              <li>
-                <Link href="/contacto" className="transition-colors hover:text-neon-cyan">
-                  Solicitar demo
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* CORFO */}
+          <img src="/CORFO.png" alt="CORFO" />
         </div>
+
+      
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-surface-border/60 pt-6 font-mono text-[10px] text-ink-faint sm:flex-row">
           <span>© {new Date().getFullYear()} Awki AI Tech · Macrozona Norte, Chile</span>
-          <span className="flex items-center gap-2">
-            <span className="text-neon-cyan">[ SISTEMA OPERATIVO ]</span>
-            <span>generado con metodología Skilyfi</span>
-          </span>
+          <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-2">
+              <span className="text-neon-cyan">[ SISTEMA OPERATIVO ]</span>
+              <span>generado con metodología Skilyfi</span>
+            </span>
+          </div>
         </div>
       </div>
     </footer>
